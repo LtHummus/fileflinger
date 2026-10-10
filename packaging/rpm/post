@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+# $1 is the number of installed versions after this one: 1 on install, 2+ on upgrade
+
+systemd-sysusers fileflinger.conf
+
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload
+    if [ "$1" -eq 1 ]; then
+        # services aren't enabled from scriptlets on RHEL-likes; presets decide that
+        echo "fileflinger: set base_url in /etc/fileflinger/fileflinger.toml, then run"
+        echo "  sudo systemctl enable --now fileflinger"
+        echo "and open the port (6446 unless you changed it) if firewalld is running, e.g."
+        echo "  sudo firewall-cmd --permanent --add-port=6446/tcp && sudo firewall-cmd --reload"
+    else
+        systemctl try-restart fileflinger.service
+    fi
+fi

@@ -1,0 +1,5 @@
+#!/bin/sh
+# DSM packages can't write /etc, so point every fling invocation at the
+# package's config; that's where the socket paths live.
+exec /var/packages/fileflinger/target/libexec/fling \
+    --config /var/packages/fileflinger/var/fileflinger.toml "$@"

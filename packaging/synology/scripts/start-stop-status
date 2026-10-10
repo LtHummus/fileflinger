@@ -1,0 +1,54 @@
+#!/bin/sh
+PKGVAR="${SYNOPKG_PKGVAR:-/var/packages/fileflinger/var}"
+BIN="${SYNOPKG_PKGDEST:-/var/packages/fileflinger/target}/libexec/fling"
+CFG="$PKGVAR/fileflinger.toml"
+PIDFILE="$PKGVAR/fileflinger.pid"
+LOG="$PKGVAR/fileflinger.log"
+
+running() {
+    [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
+}
+
+fail() {
+    echo "$1" > "${SYNOPKG_TEMP_LOGFILE:-/dev/stderr}"
+    exit 1
+}
+
+case "$1" in
+    start)
+        running && exit 0
+        # users need to reach the sockets and read the config to run fling
+        mkdir -p "$PKGVAR/run"
+        chmod 0755 "$PKGVAR" "$PKGVAR/run"
+        chmod 0644 "$CFG"
+        # keep one old log around
+        if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 10485760 ]; then
+            mv -f "$LOG" "$LOG.1"
+        fi
+        "$BIN" --config "$CFG" serve >> "$LOG" 2>&1 &
+        echo $! > "$PIDFILE"
+        sleep 1
+        running || fail "fileflinger exited during startup; see $LOG"
+        ;;
+    stop)
+        if running; then
+            pid=$(cat "$PIDFILE")
+            kill -TERM "$pid"
+            # drain_timeout defaults to 30s
+            i=0
+            while kill -0 "$pid" 2>/dev/null && [ "$i" -lt 40 ]; do
+                sleep 1
+                i=$((i + 1))
+            done
+            kill -KILL "$pid" 2>/dev/null
+        fi
+        rm -f "$PIDFILE"
+        ;;
+    status)
+        running || exit 3
+        ;;
+    log)
+        echo "$LOG"
+        ;;
+esac
+exit 0

@@ -1,0 +1,2 @@
+# installed as /usr/lib/sysusers.d/fileflinger.conf; also creates the matching group
+u fileflinger - "fileflinger" /var/lib/fileflinger /usr/sbin/nologin

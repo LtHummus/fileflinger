@@ -1,0 +1,43 @@
+#!/bin/sh
+# Runs as the package user. SYNOPKG_PKGVAR survives upgrades, so only write
+# the config on first install.
+CFG="$SYNOPKG_PKGVAR/fileflinger.toml"
+[ -f "$CFG" ] && exit 0
+
+cat > "$CFG" <<TOML
+# fileflinger configuration, written by the installer. Restart the package
+# from Package Center after editing.
+
+base_url = "${wizard_base_url}"
+port = ${wizard_port:-6446}
+
+# If DSM's reverse proxy (Control Panel > Login Portal > Advanced) fronts
+# fileflinger, take the client IP from the header it sets.
+# ip_header = "X-Forwarded-For"
+# ip_header is only believed from these addresses; anyone else gets their own
+# connection address, so it can't be spoofed by reaching the port directly.
+# The default covers a proxy on this machine or the local network.
+# trusted_proxies = ["127.0.0.0/8", "::1/128", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7"]
+
+# How many downloads of codes that don't exist each client may try per minute
+# before getting "429 Too Many Requests". Real downloads never count. 0 disables.
+# failed_lookups_per_minute = 10
+
+default_ttl = "1h"
+
+# How long a share that hit its download limit is kept after its last
+# download, so the people who got in can still resume.
+# exhausted_grace_period = "15m"
+
+database_file = "$SYNOPKG_PKGVAR/fileflinger.db"
+spool_directory = "$SYNOPKG_PKGVAR/spool"
+
+# DSM users can't be added to the package's own group, so the sockets are
+# world-connectable and allowed_gids does the access control. Supplementary
+# groups count.
+socket_path = "$SYNOPKG_PKGVAR/run/daemon.sock"
+fd_socket_path = "$SYNOPKG_PKGVAR/run/fd.sock"
+socket_mode = "0666"
+allowed_gids = [${wizard_allowed_gids}]
+TOML
+exit 0

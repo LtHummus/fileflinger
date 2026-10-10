@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = configure ]; then
+    # no-op when the user already exists, including ones made by adduser in older versions
+    systemd-sysusers fileflinger.conf
+fi
+
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload
+    if [ -z "$2" ]; then
+        # fresh install: base_url has to be set before this is useful
+        systemctl enable fileflinger.service
+        echo "fileflinger: set base_url in /etc/fileflinger/fileflinger.toml, then run"
+        echo "  sudo systemctl start fileflinger"
+    else
+        systemctl try-restart fileflinger.service
+    fi
+fi
