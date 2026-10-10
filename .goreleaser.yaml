@@ -1,0 +1,79 @@
+version: 2
+
+project_name: fileflinger
+
+builds:
+  - binary: fling
+    env: [CGO_ENABLED=0]
+    goos: [linux]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags: ["-s -w -X main.version={{ .Version }} -X main.commit={{ .ShortCommit }}"]
+    hooks:
+      post:
+        # GoReleaser has no .spk format, so wrap each binary ourselves
+        - cmd: packaging/synology/build-spk.sh "{{ .Path }}" {{ .Arch }} {{ .Major }}.{{ .Minor }}.{{ .Patch }}
+          output: true
+
+archives:
+  - formats: [tar.gz]
+
+nfpms:
+  - package_name: fileflinger
+    formats: [deb, rpm]
+    bindir: /usr/bin
+    maintainer: LtHummus <LtHummus@users.noreply.github.com>
+    homepage: https://github.com/LtHummus/fileflinger
+    description: Quickly host files from the command line
+    license: MIT
+    section: net
+    contents:
+      - src: packaging/linux/fileflinger.service
+        dst: /usr/lib/systemd/system/fileflinger.service
+      - src: packaging/linux/fileflinger.sysusers
+        dst: /usr/lib/sysusers.d/fileflinger.conf
+        file_info:
+          mode: 0644
+      - src: packaging/linux/fileflinger.toml
+        dst: /etc/fileflinger/fileflinger.toml
+        type: config|noreplace
+        file_info:
+          mode: 0644
+      - src: LICENSE
+        dst: /usr/share/doc/fileflinger/copyright
+        packager: deb
+        file_info:
+          mode: 0644
+      - src: LICENSE
+        dst: /usr/share/licenses/fileflinger/LICENSE
+        type: license
+        packager: rpm
+        file_info:
+          mode: 0644
+    overrides:
+      deb:
+        # older Debian/Ubuntu ship systemd-sysusers inside systemd without providing the name
+        dependencies: ["systemd-sysusers | systemd"]
+        scripts:
+          postinstall: packaging/deb/postinst
+          preremove: packaging/deb/prerm
+          postremove: packaging/deb/postrm
+      rpm:
+        dependencies: [systemd]
+        scripts:
+          postinstall: packaging/rpm/post
+          preremove: packaging/rpm/preun
+          postremove: packaging/rpm/postun
+
+checksum:
+  extra_files:
+    - glob: dist/*.spk
+
+release:
+  # tags like v0.5.0-beta.1 get marked as pre-releases on GitHub
+  prerelease: auto
+  extra_files:
+    - glob: dist/*.spk
+
+changelog:
+  disable: true

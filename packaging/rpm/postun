@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+# rpm has no purge, so /var/lib/fileflinger and the fileflinger user are left in place
+
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload || true
+fi

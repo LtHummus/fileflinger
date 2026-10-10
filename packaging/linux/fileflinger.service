@@ -1,0 +1,38 @@
+[Unit]
+Description=fileflinger
+Documentation=https://github.com/LtHummus/fileflinger
+After=network.target
+
+[Service]
+User=fileflinger
+Group=fileflinger
+ExecStart=/usr/bin/fling serve
+Restart=on-failure
+# must outlast drain_timeout (30s by default)
+TimeoutStopSec=45
+
+# /run/fileflinger holds the sockets; /var/lib/fileflinger the database and spool
+RuntimeDirectory=fileflinger
+RuntimeDirectoryMode=0755
+StateDirectory=fileflinger
+StateDirectoryMode=0750
+UMask=0007
+
+# files arrive as passed fds, so the daemon never needs to see anyone's home
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

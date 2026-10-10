@@ -1,0 +1,9 @@
+.idea
+*.iml
+fileflinger
+flinger.sqlite
+flinger.sqlite-shm
+flinger.sqlite-wal
+fling
+dist/
+!packaging/synology/package/bin/fling

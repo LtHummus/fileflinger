@@ -1,0 +1,34 @@
+# fileflinger configuration. Every setting can also be given as a flag or a
+# FILEFLINGER_* environment variable; run `fling serve --help` for the list.
+
+# Where fileflinger is reachable from the outside world. Required: share
+# links are built from this.
+# base_url = "https://files.example.com"
+
+port = 6446
+
+# If fileflinger sits behind a reverse proxy, the header carrying the client IP.
+# ip_header = "X-Forwarded-For"
+# ip_header is only believed from these addresses; anyone else gets their own
+# connection address, so it can't be spoofed by reaching the port directly.
+# The default covers a proxy on this machine or the local network.
+# trusted_proxies = ["127.0.0.0/8", "::1/128", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7"]
+
+# How many downloads of codes that don't exist each client may try per minute
+# before getting "429 Too Many Requests". Real downloads never count. 0 disables.
+# failed_lookups_per_minute = 10
+
+default_ttl = "1h"
+
+# How long a share that hit its download limit is kept after its last
+# download, so the people who got in can still resume.
+# exhausted_grace_period = "15m"
+
+database_file = "/var/lib/fileflinger/fileflinger.db"
+spool_directory = "/var/lib/fileflinger/spool"
+
+# Access control. The sockets in /run/fileflinger are group fileflinger with
+# mode 0660, so `sudo adduser <user> fileflinger` is enough to let someone
+# share files. Set these to narrow it further; supplementary groups count.
+# allowed_uids = [1000]
+# allowed_gids = [1000]

@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package fileflinger.v1;
+
+option go_package = "/proto;proto";
+
+import "google/protobuf/timestamp.proto";
+
+service FileSource {
+  rpc Stat(StatRequest) returns (StatResponse);
+  rpc Read(ReadRequest) returns (stream Chunk);
+}
+
+service Admin {
+  rpc StartShare(StartShareRequest) returns (StartShareResponse);
+  rpc AcceptShare(AcceptShareRequest) returns (AcceptShareResponse);
+  rpc List(ListRequest) returns (ListResponse);
+  rpc Revoke(RevokeRequest) returns (RevokeResponse);
+  rpc AddRoot(AddRootRequest) returns (AddRootResponse);
+  rpc DeleteRoot(DeleteRootRequest) returns (DeleteRootResponse);
+  rpc ListRoots(ListRootsRequest) returns (ListRootsResponse);
+  rpc Version(VersionRequest) returns (VersionResponse);
+}
+
+message StatRequest {
+  string code = 1;
+  string remote_ip = 2;
+}
+
+message StatResponse {
+  int64 size = 1;
+  string filename = 2;
+
+  string etag = 3;
+
+  google.protobuf.Timestamp modified = 4;
+}
+
+message ReadRequest {
+  string code = 1;
+
+  int64 offset = 2;
+  int64 length = 3;
+
+  string if_match_etag = 4;
+
+  string remote_ip = 5;
+}
+
+message Chunk {
+  bytes data = 1;
+}
+
+message StartShareRequest {
+  string path = 1;
+}
+
+message StartShareResponse {
+  string share_key = 1;
+}
+
+message AcceptShareRequest {
+  string share_key = 1;
+  int64 ttl_seconds = 2;
+  int32 max_downloads = 3;
+  bool persistent = 4;
+  optional string filename = 5;
+}
+
+message AcceptShareResponse {
+  string code = 1;
+  string url = 2;
+  ShareInfo info = 3;
+}
+
+message ListRequest {
+  bool include_expired = 1;
+}
+
+message ListResponse {
+  repeated ShareInfo shares = 1;
+}
+
+message ShareInfo {
+  string code = 1;
+  string path = 2;
+  int64 size = 3;
+  google.protobuf.Timestamp created = 4;
+  google.protobuf.Timestamp expires = 5;
+  int32 downloads = 6;
+  int32 max_downloads = 7;
+  bool persisted = 8;
+  string filename = 9;
+}
+
+message RevokeRequest {
+  string code = 1;
+}
+
+message RevokeResponse {
+  bool existed = 1;
+}
+
+message AddRootRequest {
+  string root = 1;
+}
+
+message AddRootResponse {
+  string root = 1;
+}
+
+message DeleteRootRequest {
+  string root = 1;
+}
+
+message DeleteRootResponse {
+  string root = 1;
+  bool existed = 2;
+}
+
+message ListRootsRequest {}
+message ListRootsResponse {
+  repeated string roots = 1;
+}
+
+message VersionRequest {}
+message VersionResponse {
+  string version = 1;
+  string commit = 2;
+}
