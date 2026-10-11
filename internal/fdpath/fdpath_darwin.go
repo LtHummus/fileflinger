@@ -10,8 +10,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-var pinner runtime.Pinner
-
 // macOS has no /proc, but fcntl(F_GETPATH) fills a MAXPATHLEN buffer with
 // the same thing.
 func internalPath(fd uintptr) (string, error) {
@@ -20,6 +18,7 @@ func internalPath(fd uintptr) (string, error) {
 	// pinning is needed here because we give the kernel a pointer as uintptr and
 	// the GC doesn't know what that means...so tell the GC to not mess with our
 	// buffer
+	var pinner runtime.Pinner
 	pinner.Pin(&buf[0])
 	defer pinner.Unpin()
 
